@@ -1487,7 +1487,8 @@ static void ctDrawSourceRow(int row, int src, int active, const char *status)
 static void showControllerTestScreen()
 {
     constexpr int exitHoldFrames = 120; // 2 s at 60 fps
-    constexpr uint16_t selectStart = (1u << 2) | (1u << 3);
+    // Not SELECT+START: some 8BitDo wireless pads claim that combo for themselves.
+    constexpr uint16_t selectUp = (1u << 2) | (1u << 4);
     uint16_t cur[CT_SRC_COUNT] = {0};
     uint16_t prev[CT_SRC_COUNT] = {0};
     bool seen[CT_SRC_COUNT] = {false};
@@ -1511,7 +1512,7 @@ static void showControllerTestScreen()
                 seen[i] = true;
             }
         }
-        if ((merged & selectStart) == selectStart)
+        if ((merged & selectUp) == selectUp)
         {
             if (++holdFrames >= exitHoldFrames)
             {
@@ -1605,7 +1606,7 @@ static void showControllerTestScreen()
             putText(1, 18, line, settings.fgcolor, settings.bgcolor);
         }
 
-        const char *hint = "Hold SELECT+START 2 sec to exit";
+        const char *hint = "Hold SELECT+UP 2 sec to exit";
         putText(centerColClamped(strlen(hint)), 26, hint, settings.fgcolor, settings.bgcolor);
         if (holdFrames > 0)
         {
@@ -1627,7 +1628,7 @@ static void showControllerTestScreen()
         Menu_LoadFrame();
     }
     // Wait for every source to read released before returning, so the held
-    // SELECT+START cannot edge-trigger the settings menu's own abort combo.
+    // SELECT cannot edge-trigger the settings menu's jump-to-SAVE shortcut.
     uint16_t merged;
     do
     {
@@ -4365,6 +4366,23 @@ int showSettingsMenu(bool calledFromGame)
                 }
                 break;
             }
+            case MenuSettingsIndex::MOPT_GENESIS_PAD:
+            {
+                label = "Genesis pad";
+                switch (working.flags.genesisPad)
+                {
+                case 0:
+                    value = "Auto";
+                    break;
+                case 1:
+                    value = "3 button";
+                    break;
+                default:
+                    value = "6 button";
+                    break;
+                }
+                break;
+            }
             case MenuSettingsIndex::MOPT_FRUITJAM_VUMETER:
             {
                 label = "Fruit Jam VU Meter";
@@ -5139,6 +5157,17 @@ int showSettingsMenu(bool calledFromGame)
                         else
                             m = (m == 0) ? 2 : m - 1;
                         working.flags.menuOverscan = m;
+                        break;
+                    }
+                    case MOPT_GENESIS_PAD:
+                    {
+                        // Auto -> 3 button -> 6 button
+                        int m = working.flags.genesisPad;
+                        if (right)
+                            m = (m + 1) % 3;
+                        else
+                            m = (m == 0) ? 2 : m - 1;
+                        working.flags.genesisPad = m;
                         break;
                     }
                     case MOPT_FDS_DISK_SWAP:
