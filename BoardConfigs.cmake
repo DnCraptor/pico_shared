@@ -584,8 +584,10 @@ elseif ( HW_CONFIG EQUAL 15 )
     # HDMI on GPIO12..19: clock 12/13, D0 14/15, D2 16/17, D1 18/19, P/N
     # swapped. USB-A host on the Pico's native USB. SD card on SPI0.
     # NES/Dendy pad on UEXT (CLK 5, LAT 9, DATA 20). GPIO0/1 are the PS/2
-    # port, GPIO26 is DVI_CEC, GPIO27/28 the PWM audio jack (unused here:
-    # sound goes over HDMI). Optional PSRAM chip select on GPIO8.
+    # port, GPIO26 is DVI_CEC. Sound goes to HDMI and, at the same time, to
+    # the PWM audio jack (left GPIO28, right GPIO27; GPIO23 high keeps the
+    # Pico's SMPS out of its noisy power-save mode). Optional PSRAM chip
+    # select on GPIO8.
     # The last 260 KB of the 4 MB flash hold pico-launcher; ROMs are never
     # written there (FLASH_RESERVED_TOP).
     # --------------------------------------------------------------------
@@ -617,6 +619,9 @@ elseif ( HW_CONFIG EQUAL 15 )
     set(PIO_USB_USE_PIO 2 CACHE BOOL "Select the PIO used for PIO-USB")
     set(PIO_DP_PLUS_PIN -1 CACHE STRING "PIO USB DP pin.")
     set(FLASH_RESERVED_TOP 266240 CACHE STRING "Bytes at the end of flash that ROMs must not overwrite") # 260 KB, pico-launcher
+    set(PWM_AUDIO_PIN_L 28 CACHE STRING "GPIO of the left PWM audio channel, -1 = no PWM audio")
+    set(PWM_AUDIO_PIN_R 27 CACHE STRING "GPIO of the right PWM audio channel")
+    set(PWM_AUDIO_SMPS_PIN 23 CACHE STRING "GPIO driven high to put the SMPS in PWM mode, -1 = none")
     if ( USE_HSTX EQUAL 1 AND NOT DEFINED GPIOHSTXD0 AND FORCE_DVI EQUAL 0)
         set(GPIOHSTXCK 13 CACHE STRING "HSTX CK+ pin")
         set(GPIOHSTXD0 15 CACHE STRING "HSTX D0+ pin")
@@ -628,6 +633,13 @@ elseif ( HW_CONFIG EQUAL 15 )
 endif ( )
 if ( NOT DEFINED FLASH_RESERVED_TOP )
     set(FLASH_RESERVED_TOP 0 CACHE STRING "Bytes at the end of flash that ROMs must not overwrite")
+endif()
+if ( NOT DEFINED PWM_AUDIO_PIN_L )
+    set(PWM_AUDIO_PIN_L -1 CACHE STRING "GPIO of the left PWM audio channel, -1 = no PWM audio")
+    set(PWM_AUDIO_PIN_R -1 CACHE STRING "GPIO of the right PWM audio channel")
+endif()
+if ( NOT DEFINED PWM_AUDIO_SMPS_PIN )
+    set(PWM_AUDIO_SMPS_PIN -1 CACHE STRING "GPIO driven high to put the SMPS in PWM mode, -1 = none")
 endif()
 # --------------------------------------------------------------------
 if (NOT DEFINED ENABLE_VU_METER)
