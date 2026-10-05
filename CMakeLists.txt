@@ -58,6 +58,7 @@ target_compile_definitions(pico_shared INTERFACE
  NOHSTXCLOCK=1 # Do not set the hstx clock in the pico_hdmi driver, as it is already set FrensHelpers.cpp
  USE_PICO_EXTRAS_I2S=$<BOOL:${USE_PICO_EXTRAS_I2S}>
  BOOTLOADER_BUILD=${BOOTLOADER_BUILD}
+ FLASH_RESERVED_TOP=${FLASH_RESERVED_TOP} # end of flash kept free of ROMs (BoardConfigs.cmake)
 )
 pico_generate_pio_header(${projectname} ${CMAKE_CURRENT_LIST_DIR}/ws2812.pio)
 target_link_libraries(pico_shared 
