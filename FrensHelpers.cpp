@@ -1396,11 +1396,24 @@ const char *storage_get_flash_manufacturer_name(uint8_t manufacturerId)
 #if 0
                                 printf("Writing block %d (%d bytes) to flash at %x\n", blockCount++, bytesRead, ofs);
 #endif
+                                // Write exactly what was read, rounded up to the flash
+                                // program page (256 B) and sector (4 KB) granularity,
+                                // with the tail filled with 0xFF. The erase and the
+                                // program used to cover the whole bufsize, so the last
+                                // chunk of a ROM wrote stale RAM and up to bufsize-1
+                                // bytes past the ROM: past flash_end, into the block
+                                // pico-launcher keeps when FLASH_RESERVED_TOP is set.
+                                // ROM_FILE_ADDR and flash_end are both 4 KB aligned, so
+                                // the rounded end never passes flash_end + 1.
+                                UINT wlen = (bytesRead + 255u) & ~255u;
+                                UINT elen = (wlen + FLASH_SECTOR_SIZE - 1u) & ~(FLASH_SECTOR_SIZE - 1u);
+                                if (wlen > bytesRead)
+                                    memset(buffer + bytesRead, 0xFF, wlen - bytesRead);
                                 // Erase and flash. These disable interrupts around the
                                 // operation and preserve the startup flash timing.
-                                flashEraseSafe(ofs, bufsize);
-                                flashProgramSafe(ofs, buffer, bufsize);
-                                ofs += bufsize;
+                                flashEraseSafe(ofs, elen);
+                                flashProgramSafe(ofs, buffer, wlen);
+                                ofs += wlen;
                                 totalBytes += bytesRead;
                                 printf("%u/%llu bytes flashed\n", totalBytes,
                                        (unsigned long long)filesize);
