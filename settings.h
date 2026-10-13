@@ -50,8 +50,10 @@ struct settings
         uint32_t genesisPad : 2;       // Genesis only: 0 = Auto (6 buttons when the cartridge header lists a 6-button pad), 1 = 3-button pad, 2 = 6-button pad
         uint32_t nesPalette : 4;       // NES only: index of the selected color palette. 0 = the board's default, which the spare bits (0) of older saved files select.
         uint32_t hstxClockFix : 1;     // HSTX builds without PIO USB: 1 = clock HSTX from PLL_USB (no dots on some displays at 378 MHz and up), which turns the built-in USB port off. Mirrored in FlashParams, see FLASHPARAM_OPT_HSTX_ON_PLL_USB.
-        uint32_t reserved : 4;         // spare bits for future flags; reset to 0
-    } flags; // 28 bits used + 4 reserved = full 32-bit container
+        uint32_t snesButtonLayout : 1; // NES only, in game (not the menu or hotkeys): 1 = SNES layout, NES B/A on the left/bottom face button (SNES Y/B) of a pad with four, 0 = NES layout (SNES B/A). The spare bits (0) of older saved files select NES.
+        uint32_t tateMode : 2;         // Vertical arcade games: 0 = Off, picture turned upright for a normal monitor; 1 = Bottom left, tate for a monitor turned clockwise (its bottom edge on the left); 2 = Bottom right, tate for a monitor turned counter-clockwise. The spare bits (0) of older saved files select 0.
+        uint32_t reserved : 1;         // spare bits for future flags; reset to 0
+    } flags; // 31 bits used + 1 reserved = full 32-bit container
 
 };
 namespace FrensSettings
@@ -74,7 +76,7 @@ namespace FrensSettings
         O2EM = 6,
         SNES = 7,
         TI99 = 8,
-        OUTRUN = 9
+        ARCADE = 9 // every arcade game (OutRun, Phoenix, Moon Cresta, Galagino, ...): one settings file, /settings_ARC.dat
     } emulators;
     static emulators emulatorType = NES;
     void initSettings(emulators emu) ;

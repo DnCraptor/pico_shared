@@ -1,5 +1,22 @@
 # Release notes
 
+## 11/10/2026
+
+- **Framebuffers taller than 240 rows on HSTX** (`hstx_setFrameSize()`). The rows are scaled to the 480 lines of the display, and a line that falls between two rows shows a mix of both, so the upright picture of a vertical arcade game (256 or 288 rows) needs no rows left out. Opt-in with `HSTX_CUSTOM_FRAME_SIZE=1` in the app's CMake; apps that do not set it are unchanged. Used by picoGalagino, picoMoonCresta and picoPhoenix.
+
+## 9/10/2026
+
+- **One emulator type for all arcade games** (`ARCADE`). It replaces `OUTRUN`, `PHOENIX` and `MOONCRESTA`, so a new arcade game no longer needs a change here. The arcade games share one settings file, `/settings_ARC.dat`, and one `currentDir`, `/roms/arcade`; each game reads its ROM set from its own folder. Settings saved in `/settings_ORUN.dat`, `/settings_PHNX.dat` or `/settings_MCRS.dat` are no longer read.
+- **`Frens::setPreVideoInitTask()`**: a task `initAll()` runs once the SD card is mounted and the settings are loaded, before the display, audio and USB start. picoGalagino copies its ROM sets to flash there on boards without PSRAM.
+
+## 6/10/2026
+
+- **Moon Cresta** added as an emulator type (`MOONCRESTA`, settings file `/settings_MCRS.dat`).
+- **Phoenix** added as an emulator type (`PHOENIX`, settings file `/settings_PHNX.dat`).
+- **Tate mode setting** (vertical arcade games only): Off, Bottom left or Bottom right. Off turns the picture upright for a normal screen; the other two show it unrotated for a monitor turned on its side, named after where the monitor's bottom edge ends up. Listed under Scanline Type, shown only when an emulator sets `MOPT_TATE_MODE` visible. New `tateMode` flag taken from the spare bits, so saved settings stay valid and read as Off.
+- **Button Layout setting** (NES only): NES or SNES. With SNES, a pad with four face buttons plays NES B and A on its left and bottom button (SNES Y and B), in game only; the menu is unchanged. New `snesButtonLayout` flag taken from the spare bits, so saved settings stay valid and read as NES. New `GamePadState::snesFaceButtons`, set by the drivers of the pads with a diamond of four (DS4, DualSense, PS Classic, XInput, Manta SNES).
+- **Fix: SNES controller on the GPIO port**: after a restart, and after every switch between menu and game, the first press of B acted as A until A, X, L or R had been pressed. The port is now read with 18 clocks; an official SNES pad holds the line low after its 16 buttons, so it is recognised while idle. An empty port and the SNES->NES adapter cable are unchanged.
+
 ## 1/10/2026
 
 - **Controller Test exits on SELECT+UP** (held 2 s) instead of SELECT+START, which some 8BitDo wireless pads claim for themselves (pico-infonesPlus #255).

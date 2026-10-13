@@ -4114,6 +4114,8 @@ int showSettingsMenu(bool calledFromGame)
         if (i == MOPT_MENU_OVERSCAN) continue; // listed with the menu colors, below
         if (i == MOPT_NES_PALETTE) continue;   // listed with the display options, below
         if (i == MOPT_HSTX_CLOCK_FIX) continue; // listed after Overclock, below
+        if (i == MOPT_BUTTON_LAYOUT) continue;  // listed before Rapid Fire on A, below
+        if (i == MOPT_TATE_MODE) continue;      // listed under Scanline Type, below
         // The three action entries that close the list are appended after this
         // loop in a fixed order, so skip them here.
         if (i == MOPT_CONTROLLER_TEST) continue;
@@ -4122,6 +4124,12 @@ int showSettingsMenu(bool calledFromGame)
         // Overclock is reachable only from the file-browser menu — applying it
         // mid-game would reboot the box and drop unsaved emulator state.
         if (i == MOPT_OVERCLOCK && calledFromGame) continue;
+        // The button layout goes right before the rapid fire entries: it is appended
+        // at the end of the enum, but it belongs with the other button settings.
+        if (i == MOPT_RAPID_FIRE_ON_A && g_settings_visibility[MOPT_BUTTON_LAYOUT] > 0)
+        {
+            visibleIndices[visibleCount++] = MOPT_BUTTON_LAYOUT;
+        }
         // The mirror of that: a disk can only be mounted against a running machine,
         // because loading a cartridge resets every drive. In-game only.
         if (i == MOPT_DISK && !calledFromGame) continue;
@@ -4139,6 +4147,13 @@ int showSettingsMenu(bool calledFromGame)
         if (i == MOPT_FONT_BACK_COLOR && g_settings_visibility[MOPT_MENU_OVERSCAN] >= 0)
         {
             visibleIndices[visibleCount++] = MOPT_MENU_OVERSCAN;
+        }
+        // Tate mode goes right under Scanline Type, whether or not that one is shown
+        // (PicoDVI builds hide it): it is appended at the end of the enum, but it is a
+        // display option. Only vertical arcade games show it.
+        if (i == MOPT_SCANLINE_TYPE && g_settings_visibility[MOPT_TATE_MODE] > 0)
+        {
+            visibleIndices[visibleCount++] = MOPT_TATE_MODE;
         }
         // The palette goes right after the screen options for the same reason. Unlike
         // the overscan entry it needs the emulator's palette list, so it stays hidden
@@ -4629,6 +4644,29 @@ int showSettingsMenu(bool calledFromGame)
             {
                 label = "Sprite Limit (8 per line)";
                 value = working.flags.removeSpriteLimit ? "OFF" : "ON";
+                break;
+            }
+            case MenuSettingsIndex::MOPT_BUTTON_LAYOUT:
+            {
+                label = "Button Layout";
+                value = working.flags.snesButtonLayout ? "SNES" : "NES";
+                break;
+            }
+            case MenuSettingsIndex::MOPT_TATE_MODE:
+            {
+                label = "Tate mode";
+                switch (working.flags.tateMode)
+                {
+                case 0:
+                    value = "Off";
+                    break;
+                case 1:
+                    value = "Bottom left";  // monitor turned clockwise
+                    break;
+                default:
+                    value = "Bottom right"; // monitor turned counter-clockwise
+                    break;
+                }
                 break;
             }
             case MenuSettingsIndex::MOPT_FDS_DISK_SWAP:
@@ -5310,6 +5348,11 @@ int showSettingsMenu(bool calledFromGame)
                         working.flags.removeSpriteLimit = !working.flags.removeSpriteLimit;
                         break;
                     }
+                    case MOPT_BUTTON_LAYOUT:
+                    {
+                        working.flags.snesButtonLayout = !working.flags.snesButtonLayout;
+                        break;
+                    }
                     case MOPT_MENU_OVERSCAN:
                     {
                         // Off -> Rows -> Rows & columns
@@ -5330,6 +5373,17 @@ int showSettingsMenu(bool calledFromGame)
                         else
                             m = (m == 0) ? 2 : m - 1;
                         working.flags.genesisPad = m;
+                        break;
+                    }
+                    case MOPT_TATE_MODE:
+                    {
+                        // Off -> Bottom left -> Bottom right
+                        int m = working.flags.tateMode;
+                        if (right)
+                            m = (m + 1) % 3;
+                        else
+                            m = (m == 0) ? 2 : m - 1;
+                        working.flags.tateMode = m;
                         break;
                     }
                     case MOPT_NES_PALETTE:
