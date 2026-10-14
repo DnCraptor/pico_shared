@@ -492,7 +492,18 @@ elseif ( HW_CONFIG EQUAL 12 )
     set(PSRAM_CS_PIN 19 CACHE STRING "Select the GPIO pin for PSRAM chip select")
 elseif ( HW_CONFIG EQUAL 13 )
     # --------------------------------------------------------------------
-    # Murmulator M2
+    # Murmulator M2 (Murmulator 2.0 + Raspberry Pi Pico 2, RP2350A, 4 MB flash)
+    # HDMI on GPIO12..19 (HSTX when USE_HSTX=1). USB keyboard/gamepad on the
+    # Pico's native USB (no PIO-USB). SD card on SPI0. NES/Dendy pads on the
+    # DB-9: CLK 20, LAT 21, DATA 26 / 27.
+    # Sound, chosen at build time with M2_AUDIO (the board routes GPIO9..11
+    # either to its I2S DAC or to the PWM filter, PWM_Enable jumper):
+    #   I2S (default): TDA1387 DAC, DIN GPIO9, BCK GPIO10, LRCK GPIO11
+    #   PWM          : left GPIO11, right GPIO10 (one PWM slice); GPIO23 high
+    #                  keeps the Pico's SMPS out of its noisy power-save mode
+    # GPIO0/1 are not a Wii-pad I2C port on this board (PS/2 mouse header),
+    # so the Wii pad is off. The last 260 KB of flash hold pico-launcher; ROMs
+    # are never written there (FLASH_RESERVED_TOP). Optional PSRAM CS GPIO8.
     # --------------------------------------------------------------------
 	set(DVICONFIG "dviConfig_Murmulator_M2" CACHE STRING "Select a default pin configuration from common_dvi_pin_configs.h")
     set(LED_GPIO_PIN "0" CACHE STRING "Select the GPIO pin for LED") # use 0 for onboard LED (Pico/Pico2)
@@ -509,20 +520,32 @@ elseif ( HW_CONFIG EQUAL 13 )
 	set(NES_DATA_1 "27" CACHE STRING "Select the Data GPIO pin for second NES controller")
 	set(NES_LAT_1  "21" CACHE STRING "Select the Latch GPIO pin for second NES controller")
     set(NES_PIO_1 "pio1" CACHE STRING "Select the PIO for second NES controller")
-    set(WII_SDA "0" CACHE STRING "Select the SDA GPIO pin for Wii Classic controller")
-    set(WII_SCL "1" CACHE STRING "Select the SCL GPIO pin for Wii Classic controller")
+    set(WII_SDA "-1" CACHE STRING "Select the SDA GPIO pin for Wii Classic controller")
+    set(WII_SCL "-1" CACHE STRING "Select the SCL GPIO pin for Wii Classic controller")
     set(WIIPAD_I2C "i2c0" CACHE STRING "Select the I2C bus for Wii Classic controller")
-    set(WIIPAD_DELAYED_START 1 CACHE BOOL "Set to 1 to enable delayed start for Wii Classic controller")
     set(UART_ENABLED 0 CACHE STRING "Enable UART output")
-    set(USE_I2S_AUDIO "PICO_AUDIO_I2S_DRIVER_PCM5000A" CACHE STRING "Enable I2S audio output")
-    set(PICO_AUDIO_I2S_DATA_PIN 9 CACHE STRING "Select the GPIO pin for I2S data")
-    set(PICO_AUDIO_I2S_CLOCK_PIN_BASE 10 CACHE STRING "Select the GPIO pin for I2S clock")
+    set(M2_AUDIO "I2S" CACHE STRING "Murmulator M2 sound output: I2S (TDA1387 DAC) or PWM")
+    set_property(CACHE M2_AUDIO PROPERTY STRINGS I2S PWM)
+    if ( M2_AUDIO STREQUAL "PWM" )
+        set(USE_I2S_AUDIO 0 CACHE STRING "Enable I2S audio output")
+        set(PICO_AUDIO_I2S_DATA_PIN -1 CACHE STRING "Select the GPIO pin for I2S data")
+        set(PICO_AUDIO_I2S_CLOCK_PIN_BASE -1 CACHE STRING "Select the GPIO pin for I2S clock")
+        set(PWM_AUDIO_PIN_L 11 CACHE STRING "GPIO of the left PWM audio channel, -1 = no PWM audio")
+        set(PWM_AUDIO_PIN_R 10 CACHE STRING "GPIO of the right PWM audio channel")
+        set(PWM_AUDIO_SMPS_PIN 23 CACHE STRING "GPIO driven high to put the SMPS in PWM mode, -1 = none")
+    elseif ( M2_AUDIO STREQUAL "I2S" )
+        set(USE_I2S_AUDIO "PICO_AUDIO_I2S_DRIVER_PCM5000A" CACHE STRING "Enable I2S audio output")
+        set(PICO_AUDIO_I2S_DATA_PIN 9 CACHE STRING "Select the GPIO pin for I2S data")
+        set(PICO_AUDIO_I2S_CLOCK_PIN_BASE 10 CACHE STRING "Select the GPIO pin for I2S clock")
+    else()
+        message(FATAL_ERROR "M2_AUDIO must be I2S or PWM, not '${M2_AUDIO}'")
+    endif()
     set(PICO_AUDIO_I2S_PIO 1 CACHE STRING "Select the PIO for I2S audio output")
     set(PICO_AUDIO_I2S_CLOCK_PINS_SWAPPED 0 CACHE STRING "Set to 1 if the I2S clock pins are swapped")
     set(PICO_AUDIO_I2S_RESET_PIN -1 CACHE STRING "Select the GPIO pin for I2S reset")
     set(PIO_USB_USE_PIO 2 CACHE BOOL "Select the PIO used for PIO-USB")
     set(PIO_DP_PLUS_PIN -1 CACHE STRING "PIO USB DP pin.")
-    set(NEEDS_LATEST_TINYUSB_SDK 1 CACHE BOOL "Set to 1 if the latest TinyUSB SDK is needed for this board")
+    set(FLASH_RESERVED_TOP 266240 CACHE STRING "Bytes at the end of flash that ROMs must not overwrite") # 260 KB, pico-launcher
     if ( USE_HSTX EQUAL 1 AND NOT DEFINED GPIOHSTXD0 AND FORCE_DVI EQUAL 0)  # HSTX pins for Murmulator M2
         set(GPIOHSTXCK 13 CACHE STRING "HSTX CK+ pin")
         set(GPIOHSTXD0 15 CACHE STRING "HSTX D0+ pin")
