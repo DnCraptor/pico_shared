@@ -144,7 +144,7 @@ namespace FrensSettings
         settings.horzontalScrollIndex = 0;
         settings.fgcolor = DEFAULT_FGCOLOR;
         settings.bgcolor = DEFAULT_BGCOLOR;
-        settings.flags.useExtAudio = (HW_CONFIG == 13); // default on Murmulator M2 (HW_CONFIG == 13) to use external audio output, otherwise default to HDMI audio 
+        settings.flags.useExtAudio = (HW_CONFIG == 12 || HW_CONFIG == 13); // default on Murmulator M1/M2 (HW_CONFIG 12/13) to use external audio output, otherwise default to HDMI audio 
         settings.flags.enableVUMeter = ENABLE_VU_METER ? 1 : 0; // default to ENABLE_VU_METER
         settings.flags.borderMode = THEMEDBORDER;
         settings.flags.dmgLCDPalette = 0; // default DMG LCD Palette, DMG Green
@@ -162,7 +162,7 @@ namespace FrensSettings
         settings.flags.rapidFireOnB = 0; // default: rapid fire off
         settings.fruitjamVolumeLevel = 16; // default volume level in db to mid (0-24)
         settings.scanlineType = 0;
-        settings.flags.useDVIModeForHDMI = (HW_CONFIG == 13 && ENABLEDVI); // default on Murmulator M2 (HW_CONFIG == 13) to use DVI mode for HDMI output
+        settings.flags.useDVIModeForHDMI = ((HW_CONFIG == 12 || HW_CONFIG == 13) && ENABLEDVI); // default on Murmulator M1/M2 (HW_CONFIG 12/13) to use DVI mode for HDMI output
         settings.version = SETTINGS_VERSION;
         settings.flags.autoSwapFDS = 0;
         settings.flags.autoInsertDiskA = 1; // default: disk side A pre-inserted at boot

@@ -460,7 +460,20 @@ elseif ( HW_CONFIG EQUAL 11 )
     set(PIO_DP_PLUS_PIN 12 CACHE STRING "PIO USB DP pin.")
 elseif ( HW_CONFIG EQUAL 12 )
     # --------------------------------------------------------------------    
-    # Murmulator M1
+    # Murmulator M1 (Murmulator 1.x + a Pico-format module; m1p2 = RP2350)
+    # HDMI on GPIO6..13 (CLK 6/7, D0 8/9, D1 10/11, D2 12/13): not HSTX pins,
+    # so PicoDVI is always used. USB keyboard/gamepad on the module's native
+    # USB. SD card on SPI0 (SCK 2, MOSI 3, MISO 4, CS 5). NES/Dendy pads:
+    # CLK 14, LAT 15, DATA 16 / 17. GPIO0/1 are the PS/2 keyboard port, so
+    # UART and the Wii pad are off.
+    # Sound, chosen at build time with M1_AUDIO (the board has a TDA1387 DAC
+    # or the PWM filter on GPIO26..28, selected with jumpers):
+    #   I2S (default): TDA1387 DAC, DIN GPIO26, BCK GPIO27, LRCK GPIO28
+    #   PWM          : left GPIO27, right GPIO26 (one PWM slice); GPIO23 high
+    #                  keeps the Pico's SMPS out of its noisy power-save mode
+    # The last 260 KB of flash hold pico-launcher; ROMs are never written there
+    # (FLASH_RESERVED_TOP). PSRAM CS GPIO19 (RP2350A); on an RP2350B module the
+    # driver retries GPIO47 by itself (drivers/pico_psram/PicoPlusPsram.cpp).
     # --------------------------------------------------------------------
 	set(DVICONFIG "dviConfig_PimoroniDemoDVSock" CACHE STRING "Select a default pin configuration from common_dvi_pin_configs.h")
     set(LED_GPIO_PIN "0" CACHE STRING "Select the GPIO pin for LED")  # use 0 for onboard LED (Pico/Pico2)
@@ -481,14 +494,28 @@ elseif ( HW_CONFIG EQUAL 12 )
 	set(WII_SCL "-1" CACHE STRING "Select the SCL GPIO pin for Wii Classic controller")
     set(WIIPAD_I2C "i2c1" CACHE STRING "Select the I2C bus for Wii Classic controller")
     set(UART_ENABLED 0 CACHE STRING "Enable UART output") # Disable UART
-    set(USE_I2S_AUDIO "PICO_AUDIO_I2S_DRIVER_PCM5000A" CACHE STRING "Enable I2S audio output")
-    set(PICO_AUDIO_I2S_DATA_PIN 26 CACHE STRING "Select the GPIO pin for I2S data")
-    set(PICO_AUDIO_I2S_CLOCK_PIN_BASE 27 CACHE STRING "Select the GPIO pin for I2S clock")
+    set(M1_AUDIO "I2S" CACHE STRING "Murmulator M1 sound output: I2S (TDA1387 DAC) or PWM")
+    set_property(CACHE M1_AUDIO PROPERTY STRINGS I2S PWM)
+    if ( M1_AUDIO STREQUAL "PWM" )
+        set(USE_I2S_AUDIO 0 CACHE STRING "Enable I2S audio output")
+        set(PICO_AUDIO_I2S_DATA_PIN -1 CACHE STRING "Select the GPIO pin for I2S data")
+        set(PICO_AUDIO_I2S_CLOCK_PIN_BASE -1 CACHE STRING "Select the GPIO pin for I2S clock")
+        set(PWM_AUDIO_PIN_L 27 CACHE STRING "GPIO of the left PWM audio channel, -1 = no PWM audio")
+        set(PWM_AUDIO_PIN_R 26 CACHE STRING "GPIO of the right PWM audio channel")
+        set(PWM_AUDIO_SMPS_PIN 23 CACHE STRING "GPIO driven high to put the SMPS in PWM mode, -1 = none")
+    elseif ( M1_AUDIO STREQUAL "I2S" )
+        set(USE_I2S_AUDIO "PICO_AUDIO_I2S_DRIVER_PCM5000A" CACHE STRING "Enable I2S audio output")
+        set(PICO_AUDIO_I2S_DATA_PIN 26 CACHE STRING "Select the GPIO pin for I2S data")
+        set(PICO_AUDIO_I2S_CLOCK_PIN_BASE 27 CACHE STRING "Select the GPIO pin for I2S clock")
+    else()
+        message(FATAL_ERROR "M1_AUDIO must be I2S or PWM, not '${M1_AUDIO}'")
+    endif()
     set(PICO_AUDIO_I2S_PIO 1 CACHE STRING "Select the PIO for I2S audio output")
     set(PICO_AUDIO_I2S_CLOCK_PINS_SWAPPED 0 CACHE STRING "Set to 1 if the I2S clock pins are swapped")
     set(PICO_AUDIO_I2S_RESET_PIN -1 CACHE STRING "Select the GPIO pin for I2S reset")
     set(PIO_USB_USE_PIO 2 CACHE BOOL "Select the PIO used for PIO-USB")
     set(PIO_DP_PLUS_PIN -1 CACHE STRING "PIO USB DP pin.")
+    set(FLASH_RESERVED_TOP 266240 CACHE STRING "Bytes at the end of flash that ROMs must not overwrite") # 260 KB, pico-launcher
     set(PSRAM_CS_PIN 19 CACHE STRING "Select the GPIO pin for PSRAM chip select")
 elseif ( HW_CONFIG EQUAL 13 )
     # --------------------------------------------------------------------
